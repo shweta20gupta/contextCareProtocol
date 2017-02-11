@@ -6,7 +6,15 @@ import sys
 import os
 import math
 from sklearn import preprocessing
+from pymongo import MongoClient
+client = MongoClient()
 
+db = client.scryOb
+collection = db.HeHack
+
+#----
+for dt in collection.find():
+	data = dt
 
 reload(sys)  
 sys.setdefaultencoding('utf8')
@@ -14,6 +22,7 @@ sys.setdefaultencoding('utf8')
 
 def load_train_test():
 	#Read data from Mongo DB
+	
 	data = pd.read_json(OUTPUT_FILE)
         train_test_ratio = int(math.ceil(.2*len(data)))
 	train_data = data[:-train_test_ratio].as_matrix()
