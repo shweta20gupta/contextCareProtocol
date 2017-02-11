@@ -9,17 +9,19 @@ from sklearn import preprocessing
 from pymongo import MongoClient
 from mlxtend.preprocessing import minmax_scaling
 client = MongoClient()
-
 db = client.scryDb
-collection = db.HeData
+collection = db.HeData_copy
 
+inputParaDict = {}
 listOfNumDict = []
 listOfStrDict = []
 for dict in collection.find():
+    inputParaDict = dict.keys()
     numDict = {}
     strDict = {}
     dict["_id"] = str(dict["_id"])
-    dict["timestamp"] = str(dict["timestamp"])
+    del dict['timestamp']
+    #dict["timestamp"] = str(dict["timestamp"])
     for key in dict:
         if type(dict[key]) != unicode and type(dict[key]) != str:
             numDict[key] = dict[key]
@@ -36,7 +38,7 @@ print strData
 reload(sys)  
 sys.setdefaultencoding('utf8')
 
-
+"""
 def load_train_test():
 	#Read data from Mongo DB
 	
@@ -78,3 +80,27 @@ def next_batch(data, batch_size, shuffle=True):
 #load_normalized_data('/home/admin8899/LBR/data/SubChubbFile.csv')
 #load_normalized_annotated_data()
 #a,b,c,d = load_train_test("Delivery services/messengers")
+"""
+
+
+def getDataFromCsv(csv_file):
+    df = pd.read_csv(csv_file)
+    return df
+
+df = getDataFromCsv("sample.csv")
+
+keyLst = df.keys()
+
+inputParaToUpdate = []
+
+for k in keyLst:
+    if k not in inputParaDict:
+        if type(df[k][0]) is str:
+            print "Updating..............."
+            collection.update({}, {'$set': {k: 'null'}}, upsert=False,multi=True)
+        else:
+            print "Updating################"
+            collection.update({}, {'$set': {k: 0}}, upsert=False,multi=True)
+
+
+print "input Parameter update Done.........................................."
