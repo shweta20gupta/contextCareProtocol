@@ -1,21 +1,38 @@
 import tensorflow as tf
 import pandas as pd
 import numpy as np
-import config
+#import config
 import sys
 import os
 import math
 from sklearn import preprocessing
 from pymongo import MongoClient
+from mlxtend.preprocessing import minmax_scaling
 client = MongoClient()
 
-db = client.scryOb
-collection = db.HeHack
+db = client.scryDb
+collection = db.HeData
 
-listOfDict = []
+listOfNumDict = []
+listOfStrDict = []
 for dict in collection.find():
-	listOfDict.append(dict)
-
+    numDict = {}
+    strDict = {}
+    dict["_id"] = str(dict["_id"])
+    dict["timestamp"] = str(dict["timestamp"])
+    for key in dict:
+        if type(dict[key]) != unicode and type(dict[key]) != str:
+            numDict[key] = dict[key]
+        else:
+            strDict[key] = dict[key]
+    listOfNumDict.append(numDict)
+    listOfStrDict.append(strDict)
+numData = pd.DataFrame(listOfNumDict)
+strData = pd.DataFrame(listOfStrDict)
+numData = minmax_scaling(numData, columns=['height','rbc count','weight','age','wbc count','weight gain during pregenacy',
+                                     'blood pressureL','blood pressureU','pregenacy month','platelets count'])
+print numData
+print strData
 reload(sys)  
 sys.setdefaultencoding('utf8')
 
@@ -23,9 +40,9 @@ sys.setdefaultencoding('utf8')
 def load_train_test():
 	#Read data from Mongo DB
 	
-        data = pd.DataFrame(listOfDict)
+    data = pd.DataFrame(listOfDict)
 	#data = pd.read_json(OUTPUT_FILE)
-        train_test_ratio = int(math.ceil(.2*len(data)))
+    train_test_ratio = int(math.ceil(.2*len(data)))
 	train_data = data[:-train_test_ratio].as_matrix()
 	test_data = data[-train_test_ratio:]
 	test_path = "./context_protocol_test.csv"
@@ -40,9 +57,9 @@ def load_train_test():
 
 
 def next_batch(data, batch_size, shuffle=True):
-    """
+
     Generates a batch iterator for a dataset.
-    """
+
     data = np.array(data)
     data_size = len(data)
     num_batches_per_epoch = int(len(data) / batch_size) + 1
