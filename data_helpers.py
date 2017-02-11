@@ -1,6 +1,7 @@
 import tensorflow as tf
 import pandas as pd
 import numpy as np
+import cPickle
 #import config
 import sys
 import os
@@ -31,31 +32,36 @@ for dict in collection.find():
     listOfStrDict.append(strDict)
 numData = pd.DataFrame(listOfNumDict)
 strData = pd.DataFrame(listOfStrDict)
+y = numData["label"].tolist()# Training Label List
+with open(r"inputParameter.pickle", "wb") as output_file:
+    cPickle.dump(inputParaDict, output_file)
+#print y
+
 numData = minmax_scaling(numData, columns=['height','rbc count','weight','age','wbc count','weight gain during pregenacy',
                                      'blood pressureL','blood pressureU','pregenacy month','platelets count'])
-reload(sys)  
+
+reload(sys)
 sys.setdefaultencoding('utf8')
 
 
 def load_train_test():
-        #Read data from Mongo DB
-	data = numData
-        train_test_ratio = int(math.ceil(.2*len(data)))
-        train_data = data[:-train_test_ratio]
-        test_data = data[-train_test_ratio:]
-        test_path = "./context_protocol_test.csv"
-        test_data.to_csv(test_path,sep=',')
-        y = train_data['Label'].tolist()
-        #train_data = train_data[['A','B','C']].as_matrix()
-        encoder = LabelEncoder()
-        encoder.fit(y)
-        encoded_Y = encoder.transform(y)
-        n_values = np.max(encoded_Y) + 1
-        y_train = np.eye(n_values)[encoded_Y]
-        return [train_data,y_train]
+    #Read data from Mongo DB
+    train_test_ratio = int(math.ceil(.2*len(numData)))
+    train_data = data[:-train_test_ratio]
+    test_data = data[-train_test_ratio:]
+    test_path = "./context_protocol_test.csv"
+    test_data.to_csv(test_path,sep=',')
+    #y = train_data['Label'].tolist()
+    #train_data = train_data[['A','B','C']].as_matrix()
+    encoder = LabelEncoder()
+    encoder.fit(y)
+    encoded_Y = encoder.transform(y)
+    n_values = np.max(encoded_Y) + 1
+    y_train = np.eye(n_values)[encoded_Y]
+    return [train_data,y_train]
 	
 
-
+"""
 def next_batch(data, batch_size, shuffle=True):
 
     Generates a batch iterator for a dataset.
@@ -78,9 +84,36 @@ def next_batch(data, batch_size, shuffle=True):
 #load_normalized_data('/home/admin8899/LBR/data/SubChubbFile.csv')
 #load_normalized_annotated_data()
 #a,b,c,d = load_train_test("Delivery services/messengers")
+
 """
 
+def testData(csvFile):
+    inputParaDict = {}
+    with open(r"inputParameter.pickle", "rb") as input_file:
+        inputParaDict = cPickle.load(input_file)
+    df = pd.read_csv(csvFile)
+    keyLst = df.keys()
+    inputParaToUpdate = []
+    for k in keyLst:
+        if k not in inputParaDict:
+            if type(df[k][0]) is str:
+                print "Updating String input parameter.............."
+                collection.update({}, {'$set': {k: 'null'}}, upsert=False, multi=True)
+            else:
+                print "Updating Numeric input parameter.............."
+                collection.update({}, {'$set': {k: 0}}, upsert=False, multi=True)
 
+    print "input Parameter update Done.........................................."
+
+
+
+
+
+
+
+
+
+"""
 def getDataFromCsv(csv_file):
     df = pd.read_csv(csv_file)
     return df
@@ -101,4 +134,4 @@ for k in keyLst:
             collection.update({}, {'$set': {k: 0}}, upsert=False,multi=True)
 
 
-print "input Parameter update Done.........................................."
+"""
