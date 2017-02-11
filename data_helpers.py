@@ -12,9 +12,9 @@ client = MongoClient()
 db = client.scryOb
 collection = db.HeHack
 
-#----
-for dt in collection.find():
-	data = dt
+listOfDict = []
+for dict in collection.find():
+	listOfDict.append(dict)
 
 reload(sys)  
 sys.setdefaultencoding('utf8')
@@ -23,7 +23,8 @@ sys.setdefaultencoding('utf8')
 def load_train_test():
 	#Read data from Mongo DB
 	
-	data = pd.read_json(OUTPUT_FILE)
+        data = pd.DataFrame(listOfDict)
+	#data = pd.read_json(OUTPUT_FILE)
         train_test_ratio = int(math.ceil(.2*len(data)))
 	train_data = data[:-train_test_ratio].as_matrix()
 	test_data = data[-train_test_ratio:]
