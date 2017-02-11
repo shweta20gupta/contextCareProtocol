@@ -33,23 +33,20 @@ numData = pd.DataFrame(listOfNumDict)
 strData = pd.DataFrame(listOfStrDict)
 numData = minmax_scaling(numData, columns=['height','rbc count','weight','age','wbc count','weight gain during pregenacy',
                                      'blood pressureL','blood pressureU','pregenacy month','platelets count'])
-print numData
-print strData
 reload(sys)  
 sys.setdefaultencoding('utf8')
 
-"""
+
 def load_train_test():
         #Read data from Mongo DB
-
-        data = pd.read_csv("./test.csv",sep=",",names = ['A','B','C','Label'])
+	data = numData
         train_test_ratio = int(math.ceil(.2*len(data)))
         train_data = data[:-train_test_ratio]
         test_data = data[-train_test_ratio:]
         test_path = "./context_protocol_test.csv"
         test_data.to_csv(test_path,sep=',')
         y = train_data['Label'].tolist()
-        train_data = train_data[['A','B','C']].as_matrix()
+        #train_data = train_data[['A','B','C']].as_matrix()
         encoder = LabelEncoder()
         encoder.fit(y)
         encoded_Y = encoder.transform(y)
