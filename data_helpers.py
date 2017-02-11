@@ -32,14 +32,15 @@ for dict in collection.find():
     listOfStrDict.append(strDict)
 numData = pd.DataFrame(listOfNumDict)
 strData = pd.DataFrame(listOfStrDict)
-y = numData["label"].tolist()# Training Label List
+y = numData["label"]# Training Label List
 with open(r"inputParameter.pickle", "wb") as output_file:
     cPickle.dump(inputParaDict, output_file)
 #print y
 
 numData = minmax_scaling(numData, columns=['height','rbc count','weight','age','wbc count','weight gain during pregenacy',
                                      'blood pressureL','blood pressureU','pregenacy month','platelets count'])
-
+numData = numData.join(y)
+print numData
 reload(sys)
 sys.setdefaultencoding('utf8')
 
