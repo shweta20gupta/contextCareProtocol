@@ -1,3 +1,4 @@
-id,rbc count,Alcohol,weight,age,height,smoking,pregenacy month,nwP,np2
-1,54,yes,55,25,5,no,5,9,yes
-2,55,no,52,24,4,yes,9,2,yes
+rbc count,Alcohol,weight,age,height,smoking,pregenacy month,number of visits,LQ_1,IQ_2
+54,yes,55,25,5,no,5,0,1,1
+55,no,52,24,4,yes,9,0,2,3
+52,no,56,27,3,no,1,0,3,4
