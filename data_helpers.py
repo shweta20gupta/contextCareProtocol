@@ -11,7 +11,7 @@ from pymongo import MongoClient
 from mlxtend.preprocessing import minmax_scaling
 client = MongoClient()
 db = client.scryDb
-collection = db.HeData_copy
+collection = db.HeData2
 
 inputParaDict = {}
 listOfNumDict = []
@@ -36,36 +36,37 @@ y = numData["label"]# Training Label List
 with open(r"inputParameter.pickle", "wb") as output_file:
     cPickle.dump(inputParaDict, output_file)
 #print y
-
-numData = minmax_scaling(numData, columns=['height','rbc count','weight','age','wbc count','weight gain during pregenacy',
-                                     'blood pressureL','blood pressureU','pregenacy month','platelets count'])
+keyList = [str(x) for x in numData.keys().tolist()]
+keyList.remove("label")
+numData = minmax_scaling(numData, columns=keyList)
 numData = numData.join(y)
-print numData
+numData = numData.sample(frac=1)
 reload(sys)
 sys.setdefaultencoding('utf8')
-
 
 def load_train_test():
     #Read data from Mongo DB
     train_test_ratio = int(math.ceil(.2*len(numData)))
-    train_data = data[:-train_test_ratio]
-    test_data = data[-train_test_ratio:]
+    train_data = numData[:-train_test_ratio]
+    y_train = train_data['label']
+    train_data.pop('label')
+    test_data = numData[-train_test_ratio:]
     test_path = "./context_protocol_test.csv"
     test_data.to_csv(test_path,sep=',')
     #y = train_data['Label'].tolist()
     #train_data = train_data[['A','B','C']].as_matrix()
-    encoder = LabelEncoder()
-    encoder.fit(y)
-    encoded_Y = encoder.transform(y)
+    encoder = preprocessing.LabelEncoder()
+    encoder.fit(y_train)
+    encoded_Y = encoder.transform(y_train)
     n_values = np.max(encoded_Y) + 1
     y_train = np.eye(n_values)[encoded_Y]
-    return [train_data,y_train]
+    return [np.asarray(train_data), np.asarray(y_train),n_values]
 	
 
-"""
+
 def next_batch(data, batch_size, shuffle=True):
 
-    Generates a batch iterator for a dataset.
+    #Generates a batch iterator for a dataset.
 
     data = np.array(data)
     data_size = len(data)
@@ -82,11 +83,6 @@ def next_batch(data, batch_size, shuffle=True):
         end_index = min((batch_num + 1) * batch_size, data_size)
         yield shuffled_data[start_index:end_index]
 
-#load_normalized_data('/home/admin8899/LBR/data/SubChubbFile.csv')
-#load_normalized_annotated_data()
-#a,b,c,d = load_train_test("Delivery services/messengers")
-
-"""
 
 def testData(csvFile):
     inputParaDict = {}
@@ -95,44 +91,30 @@ def testData(csvFile):
     df = pd.read_csv(csvFile)
     keyLst = df.keys()
     inputParaToUpdate = []
+    dct = collection.find_one()
+    del dct['_id']
+    del dct['timestamp']
+    del dct['label']
+    print "#####################"
+    print dct
     for k in keyLst:
         if k not in inputParaDict:
             if type(df[k][0]) is str:
                 print "Updating String input parameter.............."
-                collection.update({}, {'$set': {k: 'null'}}, upsert=False, multi=True)
+                collection.update({}, {'$set': {k: 'NA'}}, upsert=False, multi=True)
             else:
                 print "Updating Numeric input parameter.............."
                 collection.update({}, {'$set': {k: 0}}, upsert=False, multi=True)
-
     print "input Parameter update Done.........................................."
+    for key in dct:
+        if key not in df.keys():
+            if type(dct[key]) == unicode:
+                df[key] = "NA"
+            else:
+                df[key] = 0
 
 
+x,y,n = load_train_test()
+print len(x)
+print len(y)
 
-
-
-
-
-
-
-"""
-def getDataFromCsv(csv_file):
-    df = pd.read_csv(csv_file)
-    return df
-
-df = getDataFromCsv("sample.csv")
-
-keyLst = df.keys()
-
-inputParaToUpdate = []
-
-for k in keyLst:
-    if k not in inputParaDict:
-        if type(df[k][0]) is str:
-            print "Updating..............."
-            collection.update({}, {'$set': {k: 'null'}}, upsert=False,multi=True)
-        else:
-            print "Updating################"
-            collection.update({}, {'$set': {k: 0}}, upsert=False,multi=True)
-
-
-"""
